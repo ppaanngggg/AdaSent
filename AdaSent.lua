@@ -3,18 +3,21 @@ require 'rnn'
 
 require 'SliceTable'
 require 'Slice'
+require 'Cycle'
 
 -- params
 params = {
-WORDVEC_DIM = 4,
-HIDDEN_DIM = 5,
-WEIGHT_NUM = 3,
+    WORDVEC_DIM = 4,
+    HIDDEN_DIM = 5,
+    WEIGHT_NUM = 3,
+    CLASSIFY_HIDDEN_DIM = 10,
+    CLASSIFY_OUTPUT_DIM = 20,
+    GATE_HIDDEN_DIM = 15,
+    GATE_OUTPUT_DIM = 1
 }
 
 input = torch.rand(10,4)
 -- print(input)
-
-model = nn.Sequential()
 
 -- project from word vector space into higher sentence space
 up_proj_module = nn.Linear(params.WORDVEC_DIM, params.HIDDEN_DIM, false)
@@ -72,14 +75,60 @@ layer_up_module = nn.Sequential()
     )
     :add(nn.MixtureTable())
 
-model:add(up_proj_module)
-model:add(
-    nn.Repeater(layer_up_module, 2)
-)
+model = nn.Sequential()
+    :add(nn.ParallelTable()
+        :add(
+            nn.Sequential()
+                :add(up_proj_module)
+                :add(
+                    nn.ConcatTable()
+                        :add(nn.Sequential())
+                        :add(nn.Sequential())
+                )
+        )
+        :add(nn.Sequential())
+    )
+    :add(nn.FlattenTable())
+    :add(
+        nn.ConcatTable()
+            :add(nn.SelectTable(1))
+            :add(
+                nn.Sequential()
+                    :add(nn.NarrowTable(2,2))
+                    :add(nn.Cycle(layer_up_module))
+            )
+    )
+    :add(nn.FlattenTable())
+    :add(
+            nn.Sequencer(
+                nn.Sequential()
+                    :add(nn.Max(1))
+                    :add(nn.Reshape(1, params.HIDDEN_DIM))
+            )
+        )
+    :add(nn.JoinTable(1))
+    :add(
+        nn.ConcatTable()
+            :add(
+                nn.Sequential()
+                    :add(nn.Linear(params.HIDDEN_DIM, params.CLASSIFY_HIDDEN_DIM))
+                    :add(nn.Tanh())
+                    :add(nn.Linear(params.CLASSIFY_HIDDEN_DIM, params.CLASSIFY_OUTPUT_DIM))
+                    :add(nn.Tanh())
+                    :add(nn.SoftMax())
+            )
+            :add(
+                nn.Sequential()
+                    :add(nn.Linear(params.HIDDEN_DIM, params.GATE_HIDDEN_DIM))
+                    :add(nn.Tanh())
+                    :add(nn.Linear(params.GATE_HIDDEN_DIM, params.GATE_OUTPUT_DIM))
+                    :add(nn.Tanh())
+            )
+    )
 
 
-output = model:forward(input)
-print(output)
+output = model:forward({input, input:size()[1] - 1})
+print(output[2])
 
 -- local mongorover = require("mongorover")
 -- local client = mongorover.MongoClient.new("mongodb://127.0.0.1:27017/")

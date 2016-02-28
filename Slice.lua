@@ -21,7 +21,7 @@ function Slice:checkRange(input)
         last = self.last
     end
     if first < 1 or first > len_input or last < 1 or last > len_input or last < first then
-        error('nn.SliceTable:updateOutput(input) out of range')
+        error('nn.Slice:updateOutput(input) out of range')
     end
     return first, last
 end

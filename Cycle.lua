@@ -69,11 +69,8 @@ function Cycle:updateGradInput(input, gradOutput)
             -- else prev output as input
             self.gradInput = self.module:updateGradInput(self.output[step - 1], self._gradOutputs[step])
         end
-        print(step, ':')
-        print(self._gradOutputs[step])
-        print(self.gradInput)
     end
-
+    self.gradInput = {self.gradInput, 0}
     return self.gradInput
 end
 
@@ -85,16 +82,12 @@ function Cycle:accGradParameters(input, gradOutput, scale)
 
     -- back-propagate through time (BPTT)
     for step=self.rho,1,-1 do
-        print(step, ":")
         if step == 1 then
             self.module:accGradParameters(realInput, self._gradOutputs[step], scale)
-            print(realInput, self._gradOutputs[step])
         else
             self.module:accGradParameters(self.output[step - 1], self._gradOutputs[step], scale)
-            print(self.output[step - 1], self._gradOutputs[step])
         end
     end
-
 end
 
 function Cycle:maxBPTTstep(rho)
