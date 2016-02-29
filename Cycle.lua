@@ -21,8 +21,12 @@ function Cycle:updateOutput(input)
     local realInput = input[1]
     -- save rho
     local rho = input[2]
-    assert(torch.type(rho) == 'number', "expecting number value for arg 2")
+    assert(rho:size()[1] == 1, "expecting size()[1] == 1 for arg 2")
+    assert(rho:dim() == 1, "expecting dim() == 1 for arg 2")
+    assert(torch.type(rho) == 'torch.LongTensor', "expecting torch.LongTensor value for arg 2")
+    rho = rho[1]
     self.rho = rho
+    print(torch.type(self.rho))
 
     self.module:maxBPTTstep(rho) -- hijack rho (max number of time-steps for backprop)
     self.module:forget()
@@ -70,7 +74,7 @@ function Cycle:updateGradInput(input, gradOutput)
             self.gradInput = self.module:updateGradInput(self.output[step - 1], self._gradOutputs[step])
         end
     end
-    self.gradInput = {self.gradInput, 0}
+    self.gradInput = {self.gradInput, torch.LongTensor{0}}
     return self.gradInput
 end
 

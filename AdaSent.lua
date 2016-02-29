@@ -16,7 +16,7 @@ params = {
     GATE_OUTPUT_DIM = 1
 }
 
-input = torch.rand(10,4)
+input = torch.rand(15,4)
 -- print(input)
 
 -- project from word vector space into higher sentence space
@@ -82,11 +82,11 @@ model = nn.Sequential()
                 :add(up_proj_module)
                 :add(
                     nn.ConcatTable()
-                        :add(nn.Sequential())
-                        :add(nn.Sequential())
+                        :add(nn.Identity())
+                        :add(nn.Identity())
                 )
         )
-        :add(nn.Sequential())
+        :add(nn.Identity())
     )
     :add(nn.FlattenTable())
     :add(
@@ -111,24 +111,33 @@ model = nn.Sequential()
         nn.ConcatTable()
             :add(
                 nn.Sequential()
+                    :add(nn.Linear(params.HIDDEN_DIM, params.GATE_HIDDEN_DIM))
+                    :add(nn.Tanh())
+                    :add(nn.Linear(params.GATE_HIDDEN_DIM, params.GATE_OUTPUT_DIM))
+                    :add(nn.Tanh())
+                    :add(nn.Transpose({1,2}))
+                    :add(nn.SoftMax())
+            )
+            :add(
+                nn.Sequential()
                     :add(nn.Linear(params.HIDDEN_DIM, params.CLASSIFY_HIDDEN_DIM))
                     :add(nn.Tanh())
                     :add(nn.Linear(params.CLASSIFY_HIDDEN_DIM, params.CLASSIFY_OUTPUT_DIM))
                     :add(nn.Tanh())
                     :add(nn.SoftMax())
             )
-            :add(
-                nn.Sequential()
-                    :add(nn.Linear(params.HIDDEN_DIM, params.GATE_HIDDEN_DIM))
-                    :add(nn.Tanh())
-                    :add(nn.Linear(params.GATE_HIDDEN_DIM, params.GATE_OUTPUT_DIM))
-                    :add(nn.Tanh())
-            )
     )
+    :add(nn.MM())
 
+actualInput = {input, torch.LongTensor{input:size()[1] - 1}}
+output = model:forward(actualInput)
+print(output)
 
-output = model:forward({input, input:size()[1] - 1})
-print(output[2])
+gradOutput = torch.zeros(1, params.CLASSIFY_OUTPUT_DIM)
+gradOutput[{1,1}] = 1
+print(gradOutput)
+gradInput = model:backward(actualInput, gradOutput)
+print(gradInput[1])
 
 -- local mongorover = require("mongorover")
 -- local client = mongorover.MongoClient.new("mongodb://127.0.0.1:27017/")
