@@ -7,16 +7,16 @@ require 'Cycle'
 
 -- params
 params = {
-    WORDVEC_DIM = 4,
-    HIDDEN_DIM = 5,
+    WORDVEC_DIM = 300,
+    HIDDEN_DIM = 500,
     WEIGHT_NUM = 3,
-    CLASSIFY_HIDDEN_DIM = 10,
-    CLASSIFY_OUTPUT_DIM = 20,
-    GATE_HIDDEN_DIM = 15,
+    CLASSIFY_HIDDEN_DIM = 200,
+    CLASSIFY_OUTPUT_DIM = 50,
+    GATE_HIDDEN_DIM = 200,
     GATE_OUTPUT_DIM = 1
 }
 
-input = torch.rand(15,4)
+-- input = torch.rand(15,4)
 -- print(input)
 
 -- project from word vector space into higher sentence space
@@ -127,24 +127,25 @@ model = nn.Sequential()
             )
     )
     :add(nn.MM())
-    :add(nn.LogSoftMax())
+    -- :add(nn.LogSoftMax())
 
 
-actualInput = {input, torch.LongTensor{input:size()[1] - 1}}
-dataset = {{actualInput, 1}}
-function dataset:size() return #dataset end
+-- actualInput = {input, torch.LongTensor{input:size()[1] - 1}} -- "-1" because first layer need not cycle
+-- print(actualInput[2])
+-- dataset = {{actualInput, 1}}
+dofile('dataset.lua')
+print('finish load dataset')
 
-criterion = nn.ClassNLLCriterion()
-
-model:forward(actualInput)
+criterion = nn.CrossEntropyCriterion()
 
 trainer = nn.StochasticGradient(model, criterion)
 trainer.learningRate = 0.01
 trainer.maxIteration = 1000
 trainer:train(dataset)
 
-model:forward(actualInput)
-
+output = model:forward(dataset[1][1])
+print(output)
+print(dataset[1][2])
 
 -- output = model:forward(actualInput)
 -- print(output)
