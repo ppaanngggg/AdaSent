@@ -26,7 +26,6 @@ function Cycle:updateOutput(input)
     assert(torch.type(rho) == 'torch.LongTensor', "expecting torch.LongTensor value for arg 2")
     rho = rho[1]
     self.rho = rho
-    print(torch.type(self.rho))
 
     self.module:maxBPTTstep(rho) -- hijack rho (max number of time-steps for backprop)
     self.module:forget()

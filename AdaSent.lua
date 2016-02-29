@@ -124,33 +124,35 @@ model = nn.Sequential()
                     :add(nn.Tanh())
                     :add(nn.Linear(params.CLASSIFY_HIDDEN_DIM, params.CLASSIFY_OUTPUT_DIM))
                     :add(nn.Tanh())
-                    :add(nn.SoftMax())
             )
     )
     :add(nn.MM())
+    :add(nn.LogSoftMax())
+
 
 actualInput = {input, torch.LongTensor{input:size()[1] - 1}}
-output = model:forward(actualInput)
-print(output)
+dataset = {{actualInput, 1}}
+function dataset:size() return #dataset end
 
-gradOutput = torch.zeros(1, params.CLASSIFY_OUTPUT_DIM)
-gradOutput[{1,1}] = 1
-print(gradOutput)
-gradInput = model:backward(actualInput, gradOutput)
-print(gradInput[1])
+criterion = nn.ClassNLLCriterion()
 
--- local mongorover = require("mongorover")
--- local client = mongorover.MongoClient.new("mongodb://127.0.0.1:27017/")
--- local database_names = client:getDatabaseNames()
--- for k,v in ipairs(database_names) do
---     print(k,v)
--- end
--- local db = client:getDatabase("SeekingAlpha")
--- local collection_names = db:getCollectionNames()
--- for k,v in ipairs(collection_names) do
---     print(k,v)
--- end
--- local coll = db:getCollection("AAPL_vec")
--- for d in coll:find({}) do
---     print(d.date)
--- end
+model:forward(actualInput)
+
+trainer = nn.StochasticGradient(model, criterion)
+trainer.learningRate = 0.01
+trainer.maxIteration = 1000
+trainer:train(dataset)
+
+model:forward(actualInput)
+
+
+-- output = model:forward(actualInput)
+-- print(output)
+--
+-- local err = criterion:forward(output, 20)
+-- print(err)
+-- model:zeroGradParameters()
+-- local t = criterion:backward(output, 20)
+-- print(t)
+-- model:backward(actualInput, t)
+-- model:updateParameters(1)
