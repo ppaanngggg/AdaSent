@@ -1,5 +1,7 @@
 require 'nn'
 require 'rnn'
+require 'cutorch'
+require 'cunn'
 
 require 'SliceTable'
 require 'Slice'
@@ -130,23 +132,31 @@ model = nn.Sequential()
     -- :add(nn.LogSoftMax())
 
 dataset = torch.load('dataset')
+for i = 1,#dataset do
+    dataset[i][1][1] = dataset[i][1][1]:cuda()
+end
 function dataset:size() return #dataset end
 print('finish load dataset')
 
-criterion = nn.CrossEntropyCriterion()
+model:cuda()
+criterion = nn.CrossEntropyCriterion():cuda()
 
 trainer = nn.StochasticGradient(model, criterion)
 trainer.learningRate = 0.01
-trainer.maxIteration = 1000
+trainer.maxIteration = 100
 trainer:train(dataset)
 
 output = model:forward(dataset[1][1])
 print(output)
 print(dataset[1][2])
 
+
+-- actualInput = {torch.rand(10,300), torch.LongTensor{9}}
 -- output = model:forward(actualInput)
 -- print(output)
---
+
+-- criterion = nn.CrossEntropyCriterion()
+
 -- local err = criterion:forward(output, 20)
 -- print(err)
 -- model:zeroGradParameters()
