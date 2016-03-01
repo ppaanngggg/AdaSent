@@ -13,4 +13,5 @@ for d in coll:find({}) do
     dataset[index] = {actualInput, label}
     index = index + 1
 end
-function dataset:size() return #dataset end
+
+torch.save('../dataset', dataset)

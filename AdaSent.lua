@@ -129,11 +129,8 @@ model = nn.Sequential()
     :add(nn.MM())
     -- :add(nn.LogSoftMax())
 
-
--- actualInput = {input, torch.LongTensor{input:size()[1] - 1}} -- "-1" because first layer need not cycle
--- print(actualInput[2])
--- dataset = {{actualInput, 1}}
-dofile('dataset.lua')
+dataset = torch.load('dataset')
+function dataset:size() return #dataset end
 print('finish load dataset')
 
 criterion = nn.CrossEntropyCriterion()
