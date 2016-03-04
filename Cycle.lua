@@ -23,7 +23,7 @@ function Cycle:updateOutput(input)
     local rho = input[2]
     assert(rho:size()[1] == 1, "expecting size()[1] == 1 for arg 2")
     assert(rho:dim() == 1, "expecting dim() == 1 for arg 2")
-    assert(torch.type(rho) == 'torch.LongTensor', "expecting torch.LongTensor value for arg 2")
+    --assert(torch.type(rho) == 'torch.LongTensor', "expecting torch.LongTensor value for arg 2")
     rho = rho[1]
     self.rho = rho
 

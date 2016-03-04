@@ -1,11 +1,12 @@
 require 'nn'
 require 'rnn'
-require 'cutorch'
-require 'cunn'
+--require 'cutorch'
+--require 'cunn'
 
 require 'SliceTable'
 require 'Slice'
 require 'Cycle'
+require 'TableParallelTable'
 
 -- params
 params = {
@@ -17,9 +18,6 @@ params = {
     GATE_HIDDEN_DIM = 200,
     GATE_OUTPUT_DIM = 1
 }
-
--- input = torch.rand(15,4)
--- print(input)
 
 -- project from word vector space into higher sentence space
 up_proj_module = nn.Linear(params.WORDVEC_DIM, params.HIDDEN_DIM, false)
@@ -129,26 +127,41 @@ model = nn.Sequential()
             )
     )
     :add(nn.MM())
-    -- :add(nn.LogSoftMax())
+model = nn.Sequencer(model)
+
 
 dataset = torch.load('dataset')
-for i = 1,#dataset do
-    dataset[i][1][1] = dataset[i][1][1]:cuda()
-end
 function dataset:size() return #dataset end
 print('finish load dataset')
 
-model:cuda()
-criterion = nn.CrossEntropyCriterion():cuda()
-
-trainer = nn.StochasticGradient(model, criterion)
-trainer.learningRate = 0.01
-trainer.maxIteration = 100
-trainer:train(dataset)
-
-output = model:forward(dataset[1][1])
+input = {}
+for i = 1, 10 do
+	input[i] = dataset[i][1]
+end
+output = model:forward(input)
 print(output)
-print(dataset[1][2])
+
+--ptable = nn.TableParallelTable(model, {1,2,3,4,5,6,7,8,8,9,10,11,12,13})
+--output = ptable:forward(input)
+
+--dataset = torch.load('dataset')
+--for i = 1,#dataset do
+    --dataset[i][1][1] = dataset[i][1][1]:cuda()
+--end
+--function dataset:size() return #dataset end
+--print('finish load dataset')
+
+--model:cuda()
+--criterion = nn.CrossEntropyCriterion():cuda()
+
+--trainer = nn.StochasticGradient(model, criterion)
+--trainer.learningRate = 0.01
+--trainer.maxIteration = 1000
+--trainer:train(dataset)
+
+--output = model:forward(dataset[1][1])
+--print(output)
+--print(dataset[1][2])
 
 
 -- actualInput = {torch.rand(10,300), torch.LongTensor{9}}
