@@ -4,16 +4,25 @@ require 'Cycle'
 --require 'cutorch'
 require 'TableParallelTable.lua'
 
-add = nn.Add(5)
+linear = nn.Linear(5,3)
 
-model = nn.TableParallelTable(add, {10,11})
+model = nn.TableParallelTable(linear, {1,2,3})
+params, gradParams = model:parameters()
 
 input = {}
 for i = 1,20 do
 	input[i] = torch.rand(5)
 end
 
+gradOutput = {}
+for i = 1,20 do
+	gradOutput[i] = torch.rand(3)
+end
+
 model:forward(input)
+model:backward(input, gradOutput)
+model:updateParameters(1)
+model:zeroGradParameters()
 
 --add = nn.Add(5)
 --add.bias = torch.ones(5)

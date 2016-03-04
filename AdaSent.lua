@@ -127,22 +127,31 @@ model = nn.Sequential()
             )
     )
     :add(nn.MM())
-model = nn.Sequencer(model)
-
 
 dataset = torch.load('dataset')
 function dataset:size() return #dataset end
 print('finish load dataset')
 
 input = {}
+gradOutput = {}
 for i = 1, 10 do
 	input[i] = dataset[i][1]
+    gradOutput[i] = torch.rand(1, 50)
 end
-output = model:forward(input)
-print(output)
 
---ptable = nn.TableParallelTable(model, {1,2,3,4,5,6,7,8,8,9,10,11,12,13})
---output = ptable:forward(input)
+model:forward(input[1])
+model:backward(input[1], gradOutput[1])
+
+smodel = nn.Sequencer(model)
+smodel:training()
+soutput = smodel:forward(input)
+sgradinput = smodel:backward(input, gradOutput)
+print(sgradinput[1])
+
+ptable = nn.TableParallelTable(model, {1,2,3})
+poutput = ptable:forward(input)
+pgradinput = ptable:backward(input, gradOutput)
+print(pgradinput[1])
 
 --dataset = torch.load('dataset')
 --for i = 1,#dataset do
