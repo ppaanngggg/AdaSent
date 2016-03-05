@@ -1,12 +1,9 @@
 require 'nn'
 require 'rnn'
+require 'pnn'
 --require 'cutorch'
 --require 'cunn'
 
-require 'SliceTable'
-require 'Slice'
-require 'Cycle'
-require 'TableParallelTable'
 
 -- params
 params = {
@@ -129,29 +126,32 @@ model = nn.Sequential()
     :add(nn.MM())
 
 dataset = torch.load('dataset')
+-- function dataset:size() return #dataset end
+
+input = {}
+target = {}
+for i = 1, 10 do
+	input[i] = dataset[i][1]
+    target[i] = dataset[i][2]
+end
+dataset = {{input, target}}
 function dataset:size() return #dataset end
 print('finish load dataset')
 
-input = {}
-gradOutput = {}
-for i = 1, 10 do
-	input[i] = dataset[i][1]
-    gradOutput[i] = torch.rand(1, 50)
-end
+smodel = nn.BatchTable(model)
+cri = nn.BatchTableCriterion(nn.CrossEntropyCriterion())
 
-model:forward(input[1])
-model:backward(input[1], gradOutput[1])
+trainer = nn.StochasticGradient(smodel, cri)
+trainer.learningRate = 0.1
+trainer.maxIteration = 10
+trainer:train(dataset)
 
-smodel = nn.Sequencer(model)
-smodel:training()
-soutput = smodel:forward(input)
-sgradinput = smodel:backward(input, gradOutput)
-print(sgradinput[1])
-
-ptable = nn.TableParallelTable(model, {1,2,3})
-poutput = ptable:forward(input)
-pgradinput = ptable:backward(input, gradOutput)
-print(pgradinput[1])
+-- ptable = nn.TableParallelTable(model, {1,2,3})
+-- print('ptable forward')
+-- poutput = ptable:forward(input)
+-- print('ptable backward')
+-- pgradinput = ptable:backward(input, gradOutput)
+-- print(pgradinput[1][1])
 
 --dataset = torch.load('dataset')
 --for i = 1,#dataset do
