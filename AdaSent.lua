@@ -138,15 +138,15 @@ dataset = {{input, target}}
 function dataset:size() return #dataset end
 print('finish load dataset')
 
-smodel = nn.BatchTable(model)
+-- smodel = nn.BatchTable(model)
+ptable = nn.BatchTableCudaParallel(model, {1,2,3})
 cri = nn.BatchTableCriterion(nn.CrossEntropyCriterion())
 
-trainer = nn.StochasticGradient(smodel, cri)
+trainer = nn.StochasticGradient(ptable, cri)
 trainer.learningRate = 0.1
-trainer.maxIteration = 10
+trainer.maxIteration = 100
 trainer:train(dataset)
 
--- ptable = nn.TableParallelTable(model, {1,2,3})
 -- print('ptable forward')
 -- poutput = ptable:forward(input)
 -- print('ptable backward')
