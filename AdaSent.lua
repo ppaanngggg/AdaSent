@@ -1,8 +1,8 @@
 require 'nn'
 require 'rnn'
 require 'pnn'
---require 'cutorch'
---require 'cunn'
+require 'cutorch'
+require 'cunn'
 
 
 -- params
@@ -126,63 +126,33 @@ model = nn.Sequential()
     :add(nn.MM())
 
 dataset = torch.load('dataset')
--- function dataset:size() return #dataset end
 
-input = {}
-target = {}
-for i = 1, 10 do
-	input[i] = dataset[i][1]
-    target[i] = dataset[i][2]
-end
-dataset = {{input, target}}
+dataset = nn.pnn.datasetBatch(dataset, 10)
+
 function dataset:size() return #dataset end
 print('finish load dataset')
 
--- smodel = nn.BatchTable(model)
-ptable = nn.BatchTableCudaParallel(model, {1,2,3})
+smodel = nn.BatchTable(model)
+ptable = nn.BatchTableCudaParallel(model, {1})
 cri = nn.BatchTableCriterion(nn.CrossEntropyCriterion())
 
+-- trainer = nn.StochasticGradient(smodel, cri)
 trainer = nn.StochasticGradient(ptable, cri)
 trainer.learningRate = 0.1
 trainer.maxIteration = 100
 trainer:train(dataset)
 
--- print('ptable forward')
--- poutput = ptable:forward(input)
--- print('ptable backward')
--- pgradinput = ptable:backward(input, gradOutput)
--- print(pgradinput[1][1])
-
---dataset = torch.load('dataset')
---for i = 1,#dataset do
-    --dataset[i][1][1] = dataset[i][1][1]:cuda()
---end
---function dataset:size() return #dataset end
---print('finish load dataset')
-
---model:cuda()
---criterion = nn.CrossEntropyCriterion():cuda()
-
---trainer = nn.StochasticGradient(model, criterion)
---trainer.learningRate = 0.01
---trainer.maxIteration = 1000
---trainer:train(dataset)
-
---output = model:forward(dataset[1][1])
---print(output)
---print(dataset[1][2])
-
-
--- actualInput = {torch.rand(10,300), torch.LongTensor{9}}
--- output = model:forward(actualInput)
--- print(output)
-
--- criterion = nn.CrossEntropyCriterion()
-
--- local err = criterion:forward(output, 20)
--- print(err)
--- model:zeroGradParameters()
--- local t = criterion:backward(output, 20)
--- print(t)
--- model:backward(actualInput, t)
--- model:updateParameters(1)
+-- --dataset = torch.load('dataset')
+-- for i = 1,#dataset do
+--     dataset[i][1][1] = dataset[i][1][1]:cuda()
+-- end
+-- --function dataset:size() return #dataset end
+-- --print('finish load dataset')
+--
+-- model:cuda()
+-- criterion = nn.CrossEntropyCriterion():cuda()
+--
+-- trainer = nn.StochasticGradient(model, criterion)
+-- trainer.learningRate = 0.01
+-- trainer.maxIteration = 1000
+-- trainer:train(dataset)
