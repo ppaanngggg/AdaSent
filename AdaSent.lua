@@ -1,8 +1,8 @@
 require 'nn'
 require 'rnn'
 require 'pnn'
-require 'cutorch'
-require 'cunn'
+-- require 'cutorch'
+-- require 'cunn'
 
 
 -- params
@@ -128,7 +128,7 @@ model = nn.Sequential()
 dataset = torch.load('dataset')
 
 new_dataset = {}
-for i = 1,100 do
+for i = 1,200 do
     new_dataset[i] = dataset[i]
 end
 dataset = new_dataset
@@ -139,15 +139,15 @@ use_batch = true
 if use_batch == true then
     print('batch')
     batch_dataset = nn.pnn.datasetBatch(dataset, 25)
-    batch_dataset = pnn.recursiveCuda(batch_dataset)
+    -- batch_dataset = pnn.recursiveCuda(batch_dataset)
     function batch_dataset:size() return #batch_dataset end
 
     smodel = nn.BatchTable(model)
-    smodel:cuda()
+    -- smodel:cuda()
     -- ptable = nn.BatchTableCudaParallel(model, {1,2})
 
     cri = nn.BatchTableCriterion(nn.CrossEntropyCriterion())
-    cri:cuda()
+    -- cri:cuda()
     --
     trainer = nn.StochasticGradient(smodel, cri)
     -- trainer = nn.StochasticGradient(ptable, cri)
@@ -157,24 +157,25 @@ if use_batch == true then
     trainer:train(batch_dataset)
     print(torch.tic() - begin_time)
 
-    trainer = nn.StochasticGradient(smodel, cri)
-    -- trainer = nn.StochasticGradient(ptable, cri)
-    trainer.learningRate = 0.01
-    trainer.maxIteration = 1
-    begin_time = torch.tic()
-    trainer:train(batch_dataset)
-    print(torch.tic() - begin_time)
-
+    for i = 1,5 do
+        trainer = nn.StochasticGradient(smodel, cri)
+        -- trainer = nn.StochasticGradient(ptable, cri)
+        trainer.learningRate = 0.01
+        trainer.maxIteration = 1
+        begin_time = torch.tic()
+        trainer:train(batch_dataset)
+        print(torch.tic() - begin_time)
+    end
 else
 
     print('no batch')
 
-    dataset = pnn.recursiveCuda(dataset)
+    -- dataset = pnn.recursiveCuda(dataset)
     function dataset:size() return #dataset end
 
-    model:cuda()
+    -- model:cuda()
     criterion = nn.CrossEntropyCriterion()
-    criterion:cuda()
+    -- criterion:cuda()
     --
     trainer = nn.StochasticGradient(model, criterion)
     trainer.learningRate = 0.01
@@ -183,10 +184,12 @@ else
     trainer:train(dataset)
     print(torch.tic() - begin_time)
 
-    trainer = nn.StochasticGradient(model, criterion)
-    trainer.learningRate = 0.01
-    trainer.maxIteration = 1
-    begin_time = torch.tic()
-    trainer:train(dataset)
-    print(torch.tic() - begin_time)
+    for i = 1,5 do
+        trainer = nn.StochasticGradient(model, criterion)
+        trainer.learningRate = 0.01
+        trainer.maxIteration = 1
+        begin_time = torch.tic()
+        trainer:train(dataset)
+        print(torch.tic() - begin_time)
+    end
 end
