@@ -126,7 +126,13 @@ model = nn.Sequential()
 
 dataset = torch.load('dataset')
 
-batch_dataset = nn.pnn.datasetBatch(dataset, 64)
+-- new_dataset = {}
+-- for i = 1,10 do
+--     new_dataset[i] = dataset[i]
+-- end
+-- dataset = new_dataset
+
+batch_dataset = nn.pnn.datasetBatch(dataset, 2)
 function batch_dataset:size() return #batch_dataset end
 
 gpuTable = {1,2,3,4}
@@ -134,82 +140,14 @@ smodel = nn.BatchTable(model)
 criterion = nn.BatchTableCriterion(nn.CrossEntropyCriterion())
 
 sgd_params = {
-   learningRate = 0.01,
+   learningRate = 0.02,
    learningRateDecay = 0,
    weightDecay = 0,
-   momentum = 0
+   momentum = 0.1
 }
-
--- batch_dataset = pnn.recursiveCuda(batch_dataset)
-
--- output = smodel:forward(batch_dataset[1][1])
--- criterion:forward(output, batch_dataset[1][2])
-
 
 trainer = nn.MultiGPUTrainer(smodel, criterion, optim.sgd, sgd_params, gpuTable)
 trainer:train(batch_dataset, 100)
 
--- new_dataset = {}
--- for i = 1,200 do
---     new_dataset[i] = dataset[i]
--- end
--- dataset = new_dataset
--- print("dataset finish")
---
--- use_batch = false
---
--- if use_batch == true then
---     print('batch')
---     batch_dataset = nn.pnn.datasetBatch(dataset, 25)
---     batch_dataset = pnn.recursiveCuda(batch_dataset)
---     function batch_dataset:size() return #batch_dataset end
---
---     smodel = nn.BatchTable(model)
---     smodel:cuda()
---
---     cri = nn.BatchTableCriterion(nn.CrossEntropyCriterion())
---     cri:cuda()
---
---     trainer = nn.StochasticGradient(smodel, cri)
---     trainer.learningRate = 0.01
---     trainer.maxIteration = 1
---     begin_time = torch.tic()
---     trainer:train(batch_dataset)
---     print(torch.tic() - begin_time)
---
---     for i = 1,5 do
---         trainer = nn.StochasticGradient(smodel, cri)
---         -- trainer = nn.StochasticGradient(ptable, cri)
---         trainer.learningRate = 0.01
---         trainer.maxIteration = 1
---         begin_time = torch.tic()
---         trainer:train(batch_dataset)
---         print(torch.tic() - begin_time)
---     end
--- else
---
---     print('no batch')
---
---     dataset = pnn.recursiveCuda(dataset)
---     function dataset:size() return #dataset end
---
---     model:cuda()
---     criterion = nn.CrossEntropyCriterion()
---     criterion:cuda()
---     --
---     trainer = nn.StochasticGradient(model, criterion)
---     trainer.learningRate = 0.01
---     trainer.maxIteration = 1
---     begin_time = torch.tic()
---     trainer:train(dataset)
---     print(torch.tic() - begin_time)
---
---     for i = 1,5 do
---         trainer = nn.StochasticGradient(model, criterion)
---         trainer.learningRate = 0.01
---         trainer.maxIteration = 1
---         begin_time = torch.tic()
---         trainer:train(dataset)
---         print(torch.tic() - begin_time)
---     end
--- end
+torch.saveobj('smodel', smodel)
+torch.saveobj('sgd_params', sgd_params)
