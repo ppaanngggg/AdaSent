@@ -9,9 +9,9 @@ params = {
     WORDVEC_DIM = 300,
     HIDDEN_DIM = 500,
     WEIGHT_NUM = 3,
-    CLASSIFY_HIDDEN_DIM = 200,
+    CLASSIFY_HIDDEN_DIM = 300,
     CLASSIFY_OUTPUT_DIM = 50,
-    GATE_HIDDEN_DIM = 200,
+    GATE_HIDDEN_DIM = 250,
     GATE_OUTPUT_DIM = 1
 }
 
@@ -57,7 +57,7 @@ h_tilde_module = nn.Sequential()
     )
     :add(nn.CAddTable())
     :add(nn.Add(params.HIDDEN_DIM))
-    :add(nn.Tanh())
+    -- :add(nn.Tanh())
 
 layer_up_module = nn.Sequential()
     :add(
@@ -107,47 +107,27 @@ model = nn.Sequential()
         nn.ConcatTable()
             :add(
                 nn.Sequential()
+                    :add(nn.Dropout())
                     :add(nn.Linear(params.HIDDEN_DIM, params.GATE_HIDDEN_DIM))
-                    :add(nn.Tanh())
+                    :add(nn.ReLU())
+                    -- :add(nn.Tanh())
+                    :add(nn.Dropout())
                     :add(nn.Linear(params.GATE_HIDDEN_DIM, params.GATE_OUTPUT_DIM))
-                    :add(nn.Tanh())
+                    :add(nn.ReLU())
+                    -- :add(nn.Tanh())
                     :add(nn.Transpose({1,2}))
                     :add(nn.SoftMax())
             )
             :add(
                 nn.Sequential()
+                    :add(nn.Dropout())
                     :add(nn.Linear(params.HIDDEN_DIM, params.CLASSIFY_HIDDEN_DIM))
-                    :add(nn.Tanh())
+                    :add(nn.ReLU())
+                    -- :add(nn.Tanh())
+                    :add(nn.Dropout())
                     :add(nn.Linear(params.CLASSIFY_HIDDEN_DIM, params.CLASSIFY_OUTPUT_DIM))
+                    -- :add(nn.ReLU())
                     :add(nn.Tanh())
             )
     )
     :add(nn.MM())
-
-dataset = torch.load('dataset')
-
--- new_dataset = {}
--- for i = 1,10 do
---     new_dataset[i] = dataset[i]
--- end
--- dataset = new_dataset
-
-batch_dataset = nn.pnn.datasetBatch(dataset, 2)
-function batch_dataset:size() return #batch_dataset end
-
-gpuTable = {1,2,3,4}
-smodel = nn.BatchTable(model)
-criterion = nn.BatchTableCriterion(nn.CrossEntropyCriterion())
-
-sgd_params = {
-   learningRate = 0.02,
-   learningRateDecay = 0,
-   weightDecay = 0,
-   momentum = 0.1
-}
-
-trainer = nn.MultiGPUTrainer(smodel, criterion, optim.sgd, sgd_params, gpuTable)
-trainer:train(batch_dataset, 100)
-
-torch.saveobj('smodel', smodel)
-torch.saveobj('sgd_params', sgd_params)

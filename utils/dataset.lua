@@ -3,7 +3,7 @@ require 'torch'
 
 local client = mongorover.MongoClient.new("mongodb://127.0.0.1:27017/")
 local db = client:getDatabase("TREC")
-local coll = db:getCollection("train")
+local coll = db:getCollection("test")
 dataset = {}
 index = 1
 for d in coll:find({}) do
