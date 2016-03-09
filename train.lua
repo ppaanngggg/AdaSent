@@ -21,7 +21,9 @@ function batch_dataset:size() return #batch_dataset end
 
 gpuTable = {1,2,3,4}
 smodel = nn.BatchTable(model)
-criterion = nn.BatchTableCriterion(nn.CrossEntropyCriterion(torch.Tensor(dataList)))
+tmpCri = nn.CrossEntropyCriterion(torch.Tensor(dataList))
+tmpCri.nll.sizeAverage = false
+criterion = nn.BatchTableCriterion(tmpCri)
 
 adam_state = {}
 

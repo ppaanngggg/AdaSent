@@ -7,11 +7,11 @@ require 'optim'
 -- params
 params = {
     WORDVEC_DIM = 300,
-    HIDDEN_DIM = 500,
+    HIDDEN_DIM = 300,
     WEIGHT_NUM = 3,
-    CLASSIFY_HIDDEN_DIM = 300,
+    CLASSIFY_HIDDEN_DIM = 200,
     CLASSIFY_OUTPUT_DIM = 50,
-    GATE_HIDDEN_DIM = 250,
+    GATE_HIDDEN_DIM = 150,
     GATE_OUTPUT_DIM = 1
 }
 
@@ -109,12 +109,12 @@ model = nn.Sequential()
                 nn.Sequential()
                     :add(nn.Dropout())
                     :add(nn.Linear(params.HIDDEN_DIM, params.GATE_HIDDEN_DIM))
-                    :add(nn.ReLU())
-                    -- :add(nn.Tanh())
+                    -- :add(nn.ReLU())
+                    :add(nn.Tanh())
                     :add(nn.Dropout())
                     :add(nn.Linear(params.GATE_HIDDEN_DIM, params.GATE_OUTPUT_DIM))
-                    :add(nn.ReLU())
-                    -- :add(nn.Tanh())
+                    -- :add(nn.ReLU())
+                    :add(nn.Tanh())
                     :add(nn.Transpose({1,2}))
                     :add(nn.SoftMax())
             )
@@ -122,8 +122,8 @@ model = nn.Sequential()
                 nn.Sequential()
                     :add(nn.Dropout())
                     :add(nn.Linear(params.HIDDEN_DIM, params.CLASSIFY_HIDDEN_DIM))
-                    :add(nn.ReLU())
-                    -- :add(nn.Tanh())
+                    -- :add(nn.ReLU())
+                    :add(nn.Tanh())
                     :add(nn.Dropout())
                     :add(nn.Linear(params.CLASSIFY_HIDDEN_DIM, params.CLASSIFY_OUTPUT_DIM))
                     -- :add(nn.ReLU())
