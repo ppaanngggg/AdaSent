@@ -5,9 +5,10 @@ cutorch.setDevice(5)
 dataset = torch.load('./test_dataset')
 dataset = pnn.recursiveCuda(dataset)
 
-model = torch.loadobj('model_1')
-model = model.module
-model = model:cuda()
+
+model = torch.loadobj('model')
+model:evaluate()
+model:cuda()
 
 correctNum = 0
 

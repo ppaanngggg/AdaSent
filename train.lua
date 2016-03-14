@@ -13,22 +13,18 @@ for i = 1,#dataset do
 end
 
 for i = 1,#dataList do
-    dataList[i] = #dataset / dataList[i]
+    dataList[i] = 50 / dataList[i]
 end
 
-batch_dataset = nn.pnn.datasetBatch(dataset, 8)
-function batch_dataset:size() return #batch_dataset end
+model:training()
+criterion = nn.CrossEntropyCriterion(torch.Tensor(dataList))
+criterion.sizeAverage = false
 
-gpuTable = {1,2,3,4}
-smodel = nn.BatchTable(model)
-tmpCri = nn.CrossEntropyCriterion(torch.Tensor(dataList))
-tmpCri.nll.sizeAverage = false
-criterion = nn.BatchTableCriterion(tmpCri)
-
-adam_state = {}
-
-trainer = nn.MultiGPUTrainer(smodel, criterion, optim.adam, adam_state, gpuTable)
-trainer:train(batch_dataset, 100)
-
-torch.saveobj('smodel', smodel)
-torch.saveobj('adam_state', adam_state)
+local state = {
+    learningRate = 0.01,
+    learningRateDecay = 0.0002,
+    momentum = 0.9,
+    wd = 16
+}
+local trainer = nn.MultiGPUTrainer(model, criterion, optim.sgd, state, {1,2,3,4})
+trainer:train(dataset, 80, 200)

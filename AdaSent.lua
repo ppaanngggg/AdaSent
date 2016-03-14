@@ -7,16 +7,20 @@ require 'optim'
 -- params
 params = {
     WORDVEC_DIM = 300,
-    HIDDEN_DIM = 300,
+    HIDDEN_DIM = 500,
     WEIGHT_NUM = 3,
-    CLASSIFY_HIDDEN_DIM = 200,
+    CLASSIFY_HIDDEN_DIM = 300,
     CLASSIFY_OUTPUT_DIM = 50,
-    GATE_HIDDEN_DIM = 150,
+    GATE_HIDDEN_DIM = 250,
     GATE_OUTPUT_DIM = 1
 }
 
 -- project from word vector space into higher sentence space
-up_proj_module = nn.Linear(params.WORDVEC_DIM, params.HIDDEN_DIM, false)
+up_proj_module = nn.Sequential()
+    -- :add(nn.Dropout())
+    :add(
+        nn.Linear(params.WORDVEC_DIM, params.HIDDEN_DIM, false)
+    )
 
 
 softmax_module = nn.Sequential()
@@ -57,7 +61,7 @@ h_tilde_module = nn.Sequential()
     )
     :add(nn.CAddTable())
     :add(nn.Add(params.HIDDEN_DIM))
-    -- :add(nn.Tanh())
+    :add(nn.Tanh())
 
 layer_up_module = nn.Sequential()
     :add(
@@ -103,28 +107,27 @@ model = nn.Sequential()
             )
         )
     :add(nn.JoinTable(1))
+    :add(nn.Dropout())
     :add(
         nn.ConcatTable()
             :add(
                 nn.Sequential()
-                    :add(nn.Dropout())
                     :add(nn.Linear(params.HIDDEN_DIM, params.GATE_HIDDEN_DIM))
                     -- :add(nn.ReLU())
-                    :add(nn.Tanh())
-                    :add(nn.Dropout())
+                    :add(nn.Sigmoid())
+                    -- :add(nn.Dropout())
                     :add(nn.Linear(params.GATE_HIDDEN_DIM, params.GATE_OUTPUT_DIM))
                     -- :add(nn.ReLU())
-                    :add(nn.Tanh())
+                    :add(nn.Sigmoid())
                     :add(nn.Transpose({1,2}))
-                    :add(nn.SoftMax())
+                    :add(nn.Normalize(1))
             )
             :add(
                 nn.Sequential()
-                    :add(nn.Dropout())
                     :add(nn.Linear(params.HIDDEN_DIM, params.CLASSIFY_HIDDEN_DIM))
                     -- :add(nn.ReLU())
                     :add(nn.Tanh())
-                    :add(nn.Dropout())
+                    -- :add(nn.Dropout())
                     :add(nn.Linear(params.CLASSIFY_HIDDEN_DIM, params.CLASSIFY_OUTPUT_DIM))
                     -- :add(nn.ReLU())
                     :add(nn.Tanh())
