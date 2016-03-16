@@ -1,7 +1,6 @@
 dofile('AdaSent.lua')
 
 cutorch.setDevice(5)
-
 dataset = torch.load('./test_dataset')
 dataset = pnn.recursiveCuda(dataset)
 

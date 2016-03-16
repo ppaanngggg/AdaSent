@@ -1,6 +1,5 @@
 dofile('./AdaSent.lua')
 
-
 dataset = torch.load('./train_dataset')
 
 dataList = {}
@@ -21,10 +20,10 @@ criterion = nn.CrossEntropyCriterion(torch.Tensor(dataList))
 criterion.sizeAverage = false
 
 local state = {
-    learningRate = 0.01,
+    learningRate = 0.005,
     learningRateDecay = 0.0002,
     momentum = 0.9,
-    wd = 16
+    wd = 6
 }
 local trainer = nn.MultiGPUTrainer(model, criterion, optim.sgd, state, {1,2,3,4})
-trainer:train(dataset, 80, 200)
+trainer:train(dataset, 64, 200)

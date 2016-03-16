@@ -11,7 +11,7 @@ params = {
     WEIGHT_NUM = 3,
     CLASSIFY_HIDDEN_DIM = 300,
     CLASSIFY_OUTPUT_DIM = 50,
-    GATE_HIDDEN_DIM = 250,
+    GATE_HIDDEN_DIM = 200,
     GATE_OUTPUT_DIM = 1
 }
 
@@ -61,7 +61,7 @@ h_tilde_module = nn.Sequential()
     )
     :add(nn.CAddTable())
     :add(nn.Add(params.HIDDEN_DIM))
-    :add(nn.Tanh())
+    :add(nn.ReLU())
 
 layer_up_module = nn.Sequential()
     :add(
@@ -107,30 +107,27 @@ model = nn.Sequential()
             )
         )
     :add(nn.JoinTable(1))
-    :add(nn.Dropout())
     :add(
         nn.ConcatTable()
             :add(
                 nn.Sequential()
+                    :add(nn.Dropout())
                     :add(nn.Linear(params.HIDDEN_DIM, params.GATE_HIDDEN_DIM))
-                    -- :add(nn.ReLU())
-                    :add(nn.Sigmoid())
-                    -- :add(nn.Dropout())
+                    :add(nn.ReLU())
+                    :add(nn.Dropout())
                     :add(nn.Linear(params.GATE_HIDDEN_DIM, params.GATE_OUTPUT_DIM))
-                    -- :add(nn.ReLU())
-                    :add(nn.Sigmoid())
+                    :add(nn.ReLU())
                     :add(nn.Transpose({1,2}))
-                    :add(nn.Normalize(1))
+                    :add(nn.SoftMax())
             )
             :add(
                 nn.Sequential()
+                    :add(nn.Dropout())
                     :add(nn.Linear(params.HIDDEN_DIM, params.CLASSIFY_HIDDEN_DIM))
-                    -- :add(nn.ReLU())
-                    :add(nn.Tanh())
-                    -- :add(nn.Dropout())
+                    :add(nn.ReLU())
+                    :add(nn.Dropout())
                     :add(nn.Linear(params.CLASSIFY_HIDDEN_DIM, params.CLASSIFY_OUTPUT_DIM))
-                    -- :add(nn.ReLU())
-                    :add(nn.Tanh())
+                    :add(nn.ReLU())
             )
     )
     :add(nn.MM())
